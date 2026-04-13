@@ -984,58 +984,6 @@ async function checkAccess(accessIdx) {
     saveSites();
     renderAccessList();
     toast(a.status === 'ok' ? 'Доступ работает' : 'Доступ не работает', a.status === 'ok' ? 'success' : 'error');
-}';
-    renderAccessList();
-
-    try {
-        // Пробуем fetch с redirect:manual чтобы увидеть редирект
-        const resp = await fetch(a.url, {
-            method: 'GET',
-            redirect: 'manual',
-            credentials: 'include',
-        });
-
-        // redirect:manual вернёт status 0 (opaqueredirect) если есть редирект
-        // Или 200/302/etc если CORS позволяет
-        if (resp.type === 'opaqueredirect') {
-            // Есть редирект — скорее всего ок, но мы не можем прочитать куда
-            // Пробуем follow
-            try {
-                const resp2 = await fetch(a.url, {
-                    method: 'GET',
-                    redirect: 'follow',
-                    credentials: 'include',
-                });
-                if (resp2.url && resp2.url.includes('wp-admin') && !resp2.url.includes('wp-login')) {
-                    a.status = 'ok';
-                } else if (resp2.url && resp2.url.includes('wp-login')) {
-                    a.status = 'fail'; // Редирект на логин — доступ не работает
-                } else {
-                    a.status = 'fail';
-                }
-            } catch (e) {
-                // CORS заблокировал follow — открываем в popup для ручной проверки
-                a.status = 'fail';
-            }
-        } else if (resp.status >= 200 && resp.status < 400) {
-            // Прямой ответ — проверяем URL
-            if (resp.url && resp.url.includes('wp-admin') && !resp.url.includes('wp-login')) {
-                a.status = 'ok';
-            } else {
-                a.status = 'fail';
-            }
-        } else {
-            a.status = 'fail';
-        }
-    } catch (e) {
-        // Сетевая ошибка или CORS — страница недоступна
-        a.status = 'fail';
-    }
-
-    a.checked_at = new Date().toLocaleString('ru');
-    saveSites();
-    renderAccessList();
-    toast(a.status === 'ok' ? `Доступ активен` : `Доступ недоступен`, a.status === 'ok' ? 'success' : 'error');
 }
 
 async function checkAllAccess() {
